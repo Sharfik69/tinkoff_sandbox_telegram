@@ -1,8 +1,9 @@
-from decimal import Decimal
 import random
+from decimal import Decimal
+
 import tinvest
 from tinvest import SandboxRegisterRequest, BrokerAccountType, SandboxSetCurrencyBalanceRequest, SandboxCurrency, \
-    MarketOrderRequest, OperationType, LimitOrderRequest
+    OperationType, LimitOrderRequest
 
 import settings
 

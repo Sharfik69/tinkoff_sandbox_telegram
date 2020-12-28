@@ -1,15 +1,11 @@
-import json
-from decimal import Decimal
 import re
+from decimal import Decimal
+
 import telebot
 from telebot import types
-from tinvest import SandboxRegisterRequest, SandboxSetCurrencyBalanceRequest, SandboxCurrency, BrokerAccountType, \
-    UserAccount
 
-import settings
 import database_work
-import tinvest
-
+import settings
 from user import User
 
 bot = telebot.TeleBot(settings.__TELEGRAM_TOKEN__, parse_mode=None)
@@ -19,12 +15,14 @@ auth_users = db.get_true_users()
 
 Account = User()
 
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     if message.from_user.id in auth_users:
         bot.send_message(message.from_user.id, 'Привет, у тебя есть доступ')
     else:
-        bot.send_message(message.from_user.id, 'Доступа нет, чтобы получить доступ, нужно использовать команду\n/auth <ТВОЙ КЛЮЧ БЕЗ КАВЫЧЕК>')
+        bot.send_message(message.from_user.id,
+                         'Доступа нет, чтобы получить доступ, нужно использовать команду\n/auth <ТВОЙ КЛЮЧ БЕЗ КАВЫЧЕК>')
 
 
 @bot.message_handler(commands=['auth'])
@@ -85,7 +83,7 @@ def get_balance(message):
 
 @bot.message_handler(commands=['stocks_list'])
 def get_stocks(message):
-    #TODO: Ченить сделать
+    # TODO: Ченить сделать
     aa = Account.get_list_stocks()
     bot.send_message(message.from_user.id, str(aa))
 
@@ -94,6 +92,7 @@ def get_stocks(message):
 def search_by_ticker(message):
     bot.send_message(message.from_user.id, 'Введите тикер ценной бумаги')
     bot.register_next_step_handler(message, ticker_search)
+
 
 def ticker_search(message):
     ticker = message.text
@@ -109,6 +108,8 @@ def buy_ticker(message):
 
 def show_price_list(message):
     ans = Account.show_price_list(message.text)
+    global ticker
+    ticker = message.text
     if not ans:
         bot.send_message(message.from_user.id, 'По такому тикеру ничего не удалось найти')
     else:
@@ -148,6 +149,7 @@ def set_lots_and_buy(message):
         bot.send_message(message.from_user.id, 'Процесс покупки прерван')
         return
 
+    global ticker
     markup = types.ReplyKeyboardRemove(selective=False)
     global stock_price, stock_cnt
     try:
@@ -158,7 +160,8 @@ def set_lots_and_buy(message):
 
     status = Account.buy_by_ticker(stock_price, stock_cnt)
     if status:
-        bot.send_message(message.from_user.id, 'Заявка выставлена', reply_markup=markup)
+        bot.send_message(message.from_user.id, 'Покупка совершена', reply_markup=markup)
+        db.buy_stocks(message.from_user.id, ticker, stock_price, stock_cnt)
     else:
         bot.send_message(message.from_user.id, 'Недостаточно средств', reply_markup=markup)
 
@@ -171,6 +174,7 @@ def my_stocks(message):
         msg += '{0} ({1}): {2} лотов ({3} шт.)\n'.format(stock['name'], stock['ticker'], stock['lots'], stock['cnt'])
 
     bot.send_message(message.from_user.id, msg)
+
 
 @bot.message_handler(commands=['test'])
 def test(message):

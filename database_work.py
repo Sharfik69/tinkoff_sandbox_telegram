@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+
 
 class DbWorker:
     def __init__(self):
@@ -24,3 +26,11 @@ class DbWorker:
             self.conn.commit()
         except Exception:
             print(Exception)
+
+    def buy_stocks(self, user_id, ticker, price, cnt):
+        try:
+            self.cursor.execute("insert into buy_history values(?, ?, ?, ?, ?)",
+                                (ticker, str(price), cnt, datetime.now(), user_id))
+            self.conn.commit()
+        except Exception as e:
+            print(e)
