@@ -17,3 +17,10 @@ class DbWorker:
             self.conn.commit()
         except Exception:
             print(Exception)
+
+    def top_up(self, user_id, sum):
+        try:
+            self.cursor.execute("insert into tinkoff_true_user values('{0}', '{1}')".format(user_id, sum))
+            self.conn.commit()
+        except Exception:
+            print(Exception)

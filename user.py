@@ -26,7 +26,6 @@ class User:
         already_have = current_balance[curr]
         a = SandboxSetCurrencyBalanceRequest(balance=Decimal(balance) + already_have, currency=self.our_currency.get(curr, SandboxCurrency.rub))
         self.client.set_sandbox_currencies_balance(a)
-        print(balance, curr)
         return True
 
     def get_balance(self, beatiful=True):

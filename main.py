@@ -65,6 +65,8 @@ def set_sum(message):
         sum, curr = message.text.split(' ')
         Account.top_up_balance(sum, curr)
         bot.send_message(message.from_user.id, 'Начислено ✅', reply_markup=markup)
+        if False:
+            db.top_up(message.from_user.id, message.text)
     else:
         bot.send_message(message.from_user.id, 'Ошибка ⛔️', reply_markup=markup)
 
