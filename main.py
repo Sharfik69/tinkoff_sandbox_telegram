@@ -24,7 +24,7 @@ def send_welcome(message):
     if message.from_user.id in auth_users:
         bot.send_message(message.from_user.id, 'Привет, у тебя есть доступ')
     else:
-        bot.send_message(message.from_user.id, 'Доступа нет')
+        bot.send_message(message.from_user.id, 'Доступа нет, чтобы получить доступ, нужно использовать команду\n/auth <ТВОЙ КЛЮЧ БЕЗ КАВЫЧЕК>')
 
 
 @bot.message_handler(commands=['auth'])
@@ -34,6 +34,9 @@ def auth_user(message):
         bot.send_message(message.from_user.id, 'У вас уже есть доступ')
         return
 
+    if len(message.text.split(' ')) != 2:
+        bot.send_message(message.from_user.id, 'Что-то пошло не так, напиши /start и следуй инструкциям')
+        return
     key = message.text.split(' ')[1]
     if key in settings.__ACCESS_KEYS__:
         db.add_user(message.from_user.id)
@@ -160,6 +163,14 @@ def set_lots_and_buy(message):
         bot.send_message(message.from_user.id, 'Недостаточно средств', reply_markup=markup)
 
 
+@bot.message_handler(commands=['my_stocks'])
+def my_stocks(message):
+    portfolio = Account.get_my_stocks()
+    msg = '{}\n'.format('Список ваших акций')
+    for stock in portfolio:
+        msg += '{0} ({1}): {2} лотов ({3} шт.)\n'.format(stock['name'], stock['ticker'], stock['lots'], stock['cnt'])
+
+    bot.send_message(message.from_user.id, msg)
 
 @bot.message_handler(commands=['test'])
 def test(message):

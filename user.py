@@ -73,6 +73,19 @@ class User:
         except Exception:
             return False
 
+    def get_my_stocks(self):
+        portfolio = self.client.get_portfolio()
+        my_stocks = []
+        for info in portfolio.payload.positions:
+            print(info.instrument_type.name)
+            if info.instrument_type.name == 'stock':
+                my_stocks.append({'ticker': info.ticker,
+                                  'name': info.name,
+                                  'lots': info.lots,
+                                  'cnt': info.balance})
+        print(portfolio)
+        return my_stocks
+
     def test(self):
         # Поиск акций по тикеру
         a = self.client.get_market_search_by_ticker(ticker='AAPL')
