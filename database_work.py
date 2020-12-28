@@ -34,3 +34,8 @@ class DbWorker:
             self.conn.commit()
         except Exception as e:
             print(e)
+
+    def get_stocks(self, user_id):
+        self.cursor.execute("select * from buy_history where user_id = '{0}'".format(user_id))
+        records = self.cursor.fetchall()
+        return records

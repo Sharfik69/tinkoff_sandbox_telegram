@@ -47,6 +47,7 @@ class User:
 
     def search_by_ticker(self, ticker='AAPL'):
         a = self.client.get_market_search_by_ticker(ticker=ticker)
+        print(a)
         ans = ''
         for i in a.payload.instruments:
             ans += '{0}: {1}\n'.format(i.ticker, i.name)
@@ -56,8 +57,8 @@ class User:
         a = self.client.get_market_search_by_ticker(ticker=ticker)
         if len(a.payload.instruments) == 1:
             self.figi = a.payload.instruments[0].figi
-            print('figi = ' + self.figi)
             market = self.client.get_market_orderbook(figi=self.figi, depth=5)
+            print(market)
             data = []
             for i in market.payload.asks:
                 data.append([i.price, i.quantity])
@@ -78,28 +79,76 @@ class User:
         portfolio = self.client.get_portfolio()
         my_stocks = []
         for info in portfolio.payload.positions:
-            print(info.instrument_type.name)
             if info.instrument_type.name == 'stock':
                 my_stocks.append({'ticker': info.ticker,
                                   'name': info.name,
                                   'lots': info.lots,
                                   'cnt': info.balance})
-        print(portfolio)
         return my_stocks
 
+    def get_difference(self, records):
+        ans = Decimal('0.0')
+        currency = self.client.get_market_currencies()
+        exchange = {
+            currency.payload.instruments[0].ticker:
+                self.client.get_market_orderbook(figi=currency.payload.instruments[0].figi, depth=1).payload.asks[
+                    0].price,
+            currency.payload.instruments[1].ticker:
+                self.client.get_market_orderbook(figi=currency.payload.instruments[1].figi, depth=1).payload.asks[
+                    0].price,
+        }
+
+        for record in records:
+            about = self.client.get_market_search_by_ticker(ticker=record[0])
+
+            currency_exchange = 1
+            if about.payload.instruments[0].currency.name == 'USD':
+                currency_exchange = exchange['USD']
+            elif about.payload.instruments[0].currency.name == 'EUR':
+                currency_exchange = exchange['EUR']
+
+            spent = Decimal(about.payload.instruments[0].lot) * Decimal(record[2]) * Decimal(record[1]) * Decimal(
+                currency_exchange)
+            ans -= spent
+
+            info_now = self.client.get_market_orderbook(figi=about.payload.instruments[0].figi, depth=1)
+            price_now = Decimal(info_now.payload.last_price) * Decimal(record[2]) * Decimal(
+                about.payload.instruments[0].lot) * Decimal(currency_exchange)
+            ans += price_now
+        return ans, exchange
+
     def test(self):
-        # Поиск акций по тикеру
-        a = self.client.get_market_search_by_ticker(ticker='AAPL')
+        print('РОССИЯ С НАМИ БОГ')
+        pass
+        # currency = self.client.get_market_currencies()
+        # exchange = {
+        #     'USD' if currency.payload.instruments[0].ticker == 'USD000UTSTOM' else 'EUR':
+        #         self.client.get_market_orderbook(figi=currency.payload.instruments[0].figi, depth=1).payload.asks[
+        #             0].price,
+        #     'USD' if currency.payload.instruments[1].ticker == 'USD000UTSTOM' else 'EUR':
+        #         self.client.get_market_orderbook(figi=currency.payload.instruments[1].figi, depth=1).payload.asks[
+        #             0].price,
+        # }
+        # print(exchange)
+
+        #
+        # a = self.client.get_market_currencies()
         # print(a)
-
-        # Список всех акций
-        a = self.client.get_market_stocks()
-        print(len(a.payload.instruments))
-        # Список всех облигаций
-        a = self.client.get_market_bonds()
-
-        # Список фондов
-        a = self.client.get_market_etfs()
-
-        # Вывод заявок на продажу
-        a = self.client.get_market_orderbook(figi='BBG000B9XRY4', depth=10)
+        # print()
+        # x = self.client.get_market_orderbook(figi=a.payload.instruments[1].figi, depth=1)
+        # print(x)
+        # # Поиск акций по тикеру
+        # a = self.client.get_market_search_by_ticker(ticker='AAPL')
+        # print(a.payload.instruments[0].currency)
+        #
+        # # Список всех акций
+        # a = self.client.get_market_stocks()
+        # print(len(a.payload.instruments))
+        # # Список всех облигаций
+        # a = self.client.get_market_bonds()
+        #
+        # # Список фондов
+        # a = self.client.get_market_etfs()
+        #
+        # # Вывод заявок на продажу
+        # a = self.client.get_market_orderbook(figi='BBG000B9XRY4', depth=10)

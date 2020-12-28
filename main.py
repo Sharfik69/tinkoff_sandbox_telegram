@@ -172,7 +172,12 @@ def my_stocks(message):
     msg = '{}\n'.format('Список ваших акций')
     for stock in portfolio:
         msg += '{0} ({1}): {2} лотов ({3} шт.)\n'.format(stock['name'], stock['ticker'], stock['lots'], stock['cnt'])
-
+    msg += '-' * 10 + '\n'
+    spent = db.get_stocks(message.from_user.id)
+    personal_account_now = Account.get_difference(spent)
+    msg += 'Доход: ' + str(personal_account_now[0]) + ' рублей\n'
+    msg += str(personal_account_now[0] / personal_account_now[1]['USD000UTSTOM']) + ' долларов\n'
+    msg += str(personal_account_now[0] / personal_account_now[1]['EUR_RUB__TOM']) + ' евро\n'
     bot.send_message(message.from_user.id, msg)
 
 
