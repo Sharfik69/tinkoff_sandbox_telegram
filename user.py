@@ -63,7 +63,7 @@ class User:
             for i in market.payload.asks:
                 data.append([i.price, i.quantity])
 
-            return data, self.messages_properties[a.payload.instruments[0].currency.name]
+            return data, self.messages_properties[a.payload.instruments[0].currency.name], a.payload.instruments[0].name
         else:
             return False
 

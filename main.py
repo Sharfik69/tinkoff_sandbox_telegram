@@ -113,7 +113,7 @@ def show_price_list(message):
     if not ans:
         bot.send_message(message.from_user.id, 'По такому тикеру ничего не удалось найти')
     else:
-        price_list = ''
+        price_list = "{}\n".format(ans[2])
         markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
 
         for price, cnt in ans[0]:
