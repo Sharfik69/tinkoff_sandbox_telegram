@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import tinvest
 from tinvest import SandboxRegisterRequest, BrokerAccountType, SandboxSetCurrencyBalanceRequest, SandboxCurrency, \
-    OperationType, LimitOrderRequest
+    OperationType, LimitOrderRequest, SandboxSetPositionBalanceRequest
 
 import settings
 
@@ -57,6 +57,7 @@ class User:
         a = self.client.get_market_search_by_ticker(ticker=ticker)
         if len(a.payload.instruments) == 1:
             self.figi = a.payload.instruments[0].figi
+            print(self.figi)
             market = self.client.get_market_orderbook(figi=self.figi, depth=5)
             print(market)
             data = []
@@ -117,9 +118,32 @@ class User:
             ans += price_now
         return ans, exchange
 
+    def get_price_by_tickets(self, ticker_list):
+        price = {}
+        for ticker_ in ticker_list:
+            about = self.client.get_market_search_by_ticker(ticker=ticker_)
+            print(about)
+            info = self.client.get_market_orderbook(figi=about.payload.instruments[0].figi, depth=1)
+            price[ticker_] = (info.payload.last_price, about.payload.instruments[0].name)
+        return price
+
+    def sell_stocks(self, ticker_, cnt_now, cnt_was, price):
+        additional = Decimal(cnt_was - cnt_now) * Decimal(price)
+        about = self.client.get_market_search_by_ticker(ticker=ticker_)
+        aa = SandboxSetPositionBalanceRequest(balance=Decimal(cnt_now), figi=about.payload.instruments[0].figi)
+        self.client.set_sandbox_positions_balance(body=aa)
+        print(about)
+        print(ticker_, cnt_now, cnt_was, price)
+
     def test(self):
         print('РОССИЯ С НАМИ БОГ')
-        pass
+        aa = SandboxSetPositionBalanceRequest(balance=Decimal('230'), figi='BBG000BN56Q9')
+        self.client.set_sandbox_positions_balance(body=aa)
+        print(self.client.get_portfolio())
+
+        aa = SandboxSetPositionBalanceRequest(balance=Decimal('0'), figi='BBG000BN56Q9')
+        self.client.set_sandbox_positions_balance(body=aa)
+        print(self.client.get_portfolio())
         # currency = self.client.get_market_currencies()
         # exchange = {
         #     'USD' if currency.payload.instruments[0].ticker == 'USD000UTSTOM' else 'EUR':

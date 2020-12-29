@@ -181,6 +181,61 @@ def my_stocks(message):
     bot.send_message(message.from_user.id, msg)
 
 
+@bot.message_handler(commands=['sell_stocks'])
+def sell_stocks(message):
+    portfolio = Account.get_my_stocks()
+    print(portfolio)
+    ticker_list = [i['ticker'] for i in portfolio]
+    cnt = {i['ticker']: (i['lots'], i['cnt']) for i in portfolio}
+    prices = Account.get_price_by_tickets(ticker_list)
+    help_info = {'portfolio': portfolio, 'prices': prices, 'cnt': cnt}
+    msg = ''
+    markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+    for ticker_, item in prices.items():
+        msg += '{0} ({1}): {2} ({3} лота / {4} шт.)\n'.format(item[1], ticker_, item[0], cnt[ticker_][0], cnt[ticker_][1])
+        markup.add(types.KeyboardButton(ticker_))
+    msg += 'Выберете акции, которые хотите продать'
+    markup.add(types.KeyboardButton('Отмена'))
+    bot.send_message(message.from_user.id, msg, reply_markup=markup)
+    bot.register_next_step_handler(message, choose_cnt, help_info)
+
+
+def choose_cnt(message, help_info):
+    ticker = message.text
+    markup = types.ReplyKeyboardRemove(selective=False)
+    if ticker == 'Отмена':
+        bot.send_message(message.from_user.id, 'Процесс продажи отменен', reply_markup=markup)
+        return
+    elif ticker not in help_info['cnt']:
+        bot.send_message(message.from_user.id, 'Неправильный тикер', reply_markup=markup)
+        return
+    help_info['ticker'] = ticker
+    markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+    markup.add(types.KeyboardButton('Отмена'))
+    bot.send_message(message.from_user.id, 'Сколько лотов хотите продать?', reply_markup=markup)
+    bot.register_next_step_handler(message, sell_stocks_finally, help_info)
+
+
+def sell_stocks_finally(message, help_info):
+    markup = types.ReplyKeyboardRemove(selective=False)
+    if message.text == 'Отмена':
+        bot.send_message(message.from_user.id, 'Процесс продажи отменен', reply_markup=markup)
+        return
+    try:
+        num = int(message.text)
+    except Exception as e:
+        print(e)
+        bot.send_message(message.from_user.id, 'Произошла ошибка', reply_markup=markup)
+        return
+    if help_info['cnt'][help_info['ticker']][0] < num:
+        bot.send_message(message.from_user.id, 'Введено число, превышаюшее число лотов', reply_markup=markup)
+        return
+    # def sell_stocks(self, ticker_, cnt_now, cnt_was, price):
+    # тут ошибка
+    Account.sell_stocks(help_info['ticker'], help_info['cnt'][0] - num, help_info['cnt'][0], help_info['prices'][help_info['ticker']][0])
+    bot.send_message(message.from_user.id, 'Гавно на продажу', reply_markup=markup)
+
+
 @bot.message_handler(commands=['test'])
 def test(message):
     Account.test()
